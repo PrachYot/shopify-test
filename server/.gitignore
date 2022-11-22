@@ -39,4 +39,14 @@ lerna-debug.log*
 .env.*
 !.env.example
 
+# Database Volumes
+data
+volumes
+
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+
 *.gql
