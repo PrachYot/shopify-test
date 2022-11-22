@@ -1,8 +1,13 @@
 import { ReactElement } from 'react';
-import Layout from '../layouts/default/v1';
+import Thumbnail from '../components/thumbnails/thumbnail/v1';
+import Layout from '../layouts/v1';
 
 function Home(): ReactElement {
-  return <div>Home</div>;
+  return (
+    <div>
+      <Thumbnail />
+    </div>
+  );
 }
 
 const HOCHome: any = Home;
