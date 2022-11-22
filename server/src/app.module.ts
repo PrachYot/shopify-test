@@ -9,6 +9,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 import { join } from 'path';
 import { StorefrontResolver } from './storefront/storefront.resolver';
 import { StorefrontService } from './storefront/storefront.service';
+import { CONSTANTS } from './constants';
 
 @Module({
   imports: [
@@ -18,10 +19,12 @@ import { StorefrontService } from './storefront/storefront.service';
       imports: [ConfigsModule],
       useFactory: (configsService: ConfigsService) => {
         return {
-          // cors: {
-          //   origin: configsService.clientUrl,
-          //   credential: true,
-          // },
+          cors: CONSTANTS.enableCors
+            ? {
+                origin: configsService.clientUrl,
+                credential: true,
+              }
+            : {},
           debug: false,
           playground: false,
           plugins:

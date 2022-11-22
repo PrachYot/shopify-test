@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ConfigsService } from './configs/configs.service';
 import * as cookieParser from 'cookie-parser';
 import { CONSTANTS } from './constants';
+import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,12 +11,14 @@ async function bootstrap() {
   const { server, clientUrl } = app.get(ConfigsService);
 
   // CORS
-  // const corsOption: CorsOptions = {
-  //   origin: clientUrl,
-  //   credentials: true,
-  // };
+  const corsOption: CorsOptions = CONSTANTS.enableCors
+    ? {
+        origin: clientUrl ? [...clientUrl.split(',')] : [],
+        credentials: true,
+      }
+    : {};
 
-  // app.enableCors(corsOption);
+  app.enableCors(corsOption);
   app.use(cookieParser());
 
   // Set global prefix
