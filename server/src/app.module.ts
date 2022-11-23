@@ -4,11 +4,11 @@ import { AppService } from './app.service';
 import { ConfigsModule } from './configs/configs.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { ConfigsService } from './configs/configs.service';
+import { ConfigsService } from './configs/service/configs.service';
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 import { join } from 'path';
-import { StorefrontResolver } from './storefront/storefront.resolver';
-import { StorefrontService } from './storefront/storefront.service';
+import { StorefrontResolver } from './storefront/resolver/storefront.resolver';
+import { StorefrontService } from './storefront/service/storefront.service';
 import { CONSTANTS } from './constants';
 
 @Module({
