@@ -7,9 +7,9 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ConfigsService } from './configs/service/configs.service';
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core';
 import { join } from 'path';
-import { StorefrontResolver } from './storefront/resolver/storefront.resolver';
-import { StorefrontService } from './storefront/service/storefront.service';
 import { CONSTANTS } from './constants';
+import { ProductsResolver } from './storefront/resolvers/products/products.resolver';
+import { ProductsService } from './storefront/services/products/products.service';
 
 @Module({
   imports: [
@@ -40,6 +40,6 @@ import { CONSTANTS } from './constants';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, StorefrontResolver, StorefrontService],
+  providers: [AppService, ProductsResolver, ProductsService],
 })
 export class AppModule {}

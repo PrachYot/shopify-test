@@ -315,7 +315,7 @@ export default function Navbar() {
 
                   <div className='hidden h-full lg:flex'>
                     {/* Mega menus */}
-                    <Popover.Group className='ml-8'>
+                    <Popover.Group className='ml-8 z-20'>
                       <div className='flex h-full justify-center space-x-8'>
                         {navigation.categories.map((category, categoryIdx) => (
                           <Popover key={category.name} className='flex'>

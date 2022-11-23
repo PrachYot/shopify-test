@@ -32,3 +32,7 @@ yarn install
 ```sh
 yarn start:dev
 ```
+
+## Resources
+
+- [Shopify Api Explorer](https://shopify.dev/custom-storefronts/tools/graphiql-storefront-api)
