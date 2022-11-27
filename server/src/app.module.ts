@@ -25,11 +25,13 @@ import { CustomerTokenService } from './storefront/services/customer-token/custo
       driver: ApolloDriver,
       imports: [ConfigsModule],
       useFactory: (configsService: ConfigsService) => {
+        const { clientUrl } = configsService;
+
         return {
           cors: CONSTANTS.enableCors
             ? {
-                origin: configsService.clientUrl,
-                credential: true,
+                origin: clientUrl ? [...clientUrl.split(',')] : [],
+                credentials: true,
               }
             : {},
           debug: false,

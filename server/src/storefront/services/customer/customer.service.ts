@@ -21,20 +21,20 @@ export class CustomerService {
       .query<any>({
         data: {
           query: `
-          mutation customerCreate($input: CustomerCreateInput!) {
-            customerCreate(input: $input) {
-              customer {
-                id
-                firstName
-                lastName
-                email
-                phone
-                acceptsMarketing
-                displayName
+            mutation customerCreate($input: CustomerCreateInput!) {
+              customerCreate(input: $input) {
+                customer {
+                  id
+                  firstName
+                  lastName
+                  email
+                  phone
+                  acceptsMarketing
+                  displayName
+                }
               }
             }
-          }
-        `,
+          `,
           variables: {
             input: {
               firstName,
@@ -58,5 +58,42 @@ export class CustomerService {
     const { customerCreate } = createdCustomer.body.data;
 
     return customerCreate.customer;
+  }
+
+  async customer(customerAccessToken: string): Promise<Customer> {
+    const client = this.storefrontService.client();
+
+    const foundCustomer = await client
+      .query<any>({
+        data: {
+          query: `
+            query Customer($customerAccessToken: String!) {
+              customer(customerAccessToken: $customerAccessToken) {
+                id
+                email
+                firstName
+                lastName
+                displayName
+                phone
+                acceptsMarketing
+              }
+            }
+          `,
+          variables: {
+            customerAccessToken,
+          },
+        },
+      })
+      .catch((error) => {
+        throw new Error(error);
+      });
+
+    if (!foundCustomer || !foundCustomer.body || !foundCustomer.body.data) {
+      throw new Error('No customer');
+    }
+
+    const { customer } = foundCustomer.body.data;
+
+    return customer;
   }
 }

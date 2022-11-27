@@ -1,83 +1,128 @@
-import { Fragment, useState } from 'react';
-import { Dialog, Popover, Tab, Transition } from '@headlessui/react';
+import { Fragment, useEffect, useState } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
 import { Bars3Icon, MagnifyingGlassIcon, ShoppingCartIcon, UserIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
-import { classNames } from '../../../../utils/classnames/v1';
 import Overlay from '../../../overlays/overlay/v1';
+import SignInTemplate from '../../../templates/signIn/v1';
+import { gql, useLazyQuery, useMutation, useQuery } from '@apollo/client';
+import { tokenGet } from '../../../../utils/localStorage/v1';
 
 const currencies = ['CAD', 'USD', 'AUD', 'EUR', 'GBP'];
-const navigation = {
-  categories: [
-    {
-      name: 'Women',
-      featured: [
-        { name: 'Sleep', href: '#' },
-        { name: 'Swimwear', href: '#' },
-        { name: 'Underwear', href: '#' },
-      ],
-      collection: [
-        { name: 'Everything', href: '#' },
-        { name: 'Core', href: '#' },
-        { name: 'New Arrivals', href: '#' },
-        { name: 'Sale', href: '#' },
-      ],
-      categories: [
-        { name: 'Basic Tees', href: '#' },
-        { name: 'Artwork Tees', href: '#' },
-        { name: 'Bottoms', href: '#' },
-        { name: 'Underwear', href: '#' },
-        { name: 'Accessories', href: '#' },
-      ],
-      brands: [
-        { name: 'Full Nelson', href: '#' },
-        { name: 'My Way', href: '#' },
-        { name: 'Re-Arranged', href: '#' },
-        { name: 'Counterfeit', href: '#' },
-        { name: 'Significant Other', href: '#' },
-      ],
-    },
-    {
-      name: 'Men',
-      featured: [
-        { name: 'Casual', href: '#' },
-        { name: 'Boxers', href: '#' },
-        { name: 'Outdoor', href: '#' },
-      ],
-      collection: [
-        { name: 'Everything', href: '#' },
-        { name: 'Core', href: '#' },
-        { name: 'New Arrivals', href: '#' },
-        { name: 'Sale', href: '#' },
-      ],
-      categories: [
-        { name: 'Artwork Tees', href: '#' },
-        { name: 'Pants', href: '#' },
-        { name: 'Accessories', href: '#' },
-        { name: 'Boxers', href: '#' },
-        { name: 'Basic Tees', href: '#' },
-      ],
-      brands: [
-        { name: 'Significant Other', href: '#' },
-        { name: 'My Way', href: '#' },
-        { name: 'Counterfeit', href: '#' },
-        { name: 'Re-Arranged', href: '#' },
-        { name: 'Full Nelson', href: '#' },
-      ],
-    },
-  ],
-  pages: [
-    { name: 'Company', href: '#' },
-    { name: 'Stores', href: '#' },
-  ],
-};
+
+const CUSTOMER_ACCESS_TOKEN_CREATE = gql`
+  mutation Mutation($customerAccessTokenCreateData: CustomerAccessTokenCreateInput!) {
+    customerAccessTokenCreate(customerAccessTokenCreateData: $customerAccessTokenCreateData) {
+      customerAccessToken {
+        accessToken
+        expiresAt
+      }
+    }
+  }
+`;
+
+const CUSTOMER = gql`
+  query Customer($customerAccessToken: String!) {
+    customer(customerAccessToken: $customerAccessToken) {
+      id
+      email
+      firstName
+      lastName
+      displayName
+      phone
+      acceptsMarketing
+    }
+  }
+`;
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [openCartOverlay, setOpenCartOverlay] = useState(false);
+  const [openSignInOverlay, setOpenSignInOverlay] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [customerAccessTokenCreate] = useMutation(CUSTOMER_ACCESS_TOKEN_CREATE);
+  const [getCustomer, { data: customerData }] = useLazyQuery(CUSTOMER);
+  const [customer, setCustomer] = useState<any>(null);
+
+  useEffect(() => {
+    handleGetCustomer();
+  }, []);
+
+  useEffect(() => {
+    if (!customerData) return;
+    setCustomer(customerData.customer);
+  }, [customerData]);
+
+  const handleGetCustomer = async () => {
+    const token = tokenGet('accessToken');
+
+    await getCustomer({
+      variables: {
+        customerAccessToken: token,
+      },
+    });
+  };
+
+  const handleSignIn = async () => {
+    const res = await customerAccessTokenCreate({
+      variables: {
+        customerAccessTokenCreateData: {
+          email,
+          password,
+        },
+      },
+    }).catch(() => null);
+
+    if (!res || !res.data || !res.data.customerAccessTokenCreate) {
+      return;
+    }
+
+    const { customerAccessToken } = res.data.customerAccessTokenCreate;
+
+    const { accessToken } = customerAccessToken;
+
+    localStorage.setItem('accessToken', accessToken);
+
+    window.location.reload();
+  };
+
+  const handleCheckout = async () => {
+    //
+  };
 
   return (
     <div className='bg-white'>
-      <Overlay isOpen={openCartOverlay} onClose={() => setOpenCartOverlay(false)} />
+      <Overlay
+        isOpen={openCartOverlay}
+        onClose={() => setOpenCartOverlay(false)}
+        title='Your awesome cart'
+        buttons={{
+          submitButton: {
+            label: 'Checkout',
+            onClick: handleCheckout,
+          },
+          cancelButton: {
+            label: 'Back',
+            onClick: () => setOpenCartOverlay(false),
+          },
+        }}
+      />
+      <Overlay
+        isOpen={openSignInOverlay}
+        onClose={() => setOpenSignInOverlay(false)}
+        title='Sign In'
+        buttons={{
+          submitButton: {
+            label: 'Sign In',
+            onClick: handleSignIn,
+          },
+          cancelButton: {
+            label: 'Back',
+            onClick: () => setOpenSignInOverlay(false),
+          },
+        }}>
+        <SignInTemplate email={email} setEmail={setEmail} password={password} setPassword={setPassword} />
+      </Overlay>
 
       {/* Mobile menu */}
       <Transition.Root show={open} as={Fragment}>
@@ -113,114 +158,12 @@ export default function Navbar() {
                   </button>
                 </div>
 
-                {/* Links */}
-                <Tab.Group as='div' className='mt-2'>
-                  <div className='border-b border-gray-200'>
-                    <Tab.List className='-mb-px flex space-x-8 px-4'>
-                      {navigation.categories.map((category) => (
-                        <Tab
-                          key={category.name}
-                          className={({ selected }) =>
-                            classNames(
-                              selected ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-900',
-                              'flex-1 whitespace-nowrap border-b-2 py-4 px-1 text-base font-medium',
-                            )
-                          }>
-                          {category.name}
-                        </Tab>
-                      ))}
-                    </Tab.List>
-                  </div>
-                  <Tab.Panels as={Fragment}>
-                    {navigation.categories.map((category, categoryIdx) => (
-                      <Tab.Panel key={category.name} className='space-y-12 px-4 pt-10 pb-6'>
-                        <div className='grid grid-cols-1 items-start gap-y-10 gap-x-6'>
-                          <div className='grid grid-cols-1 gap-y-10 gap-x-6'>
-                            <div>
-                              <p id={`mobile-featured-heading-${categoryIdx}`} className='font-medium text-gray-900'>
-                                Featured
-                              </p>
-                              <ul
-                                role='list'
-                                aria-labelledby={`mobile-featured-heading-${categoryIdx}`}
-                                className='mt-6 space-y-6'>
-                                {category.featured.map((item) => (
-                                  <li key={item.name} className='flex'>
-                                    <a href={item.href} className='text-gray-500'>
-                                      {item.name}
-                                    </a>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div>
-                              <p id='mobile-categories-heading' className='font-medium text-gray-900'>
-                                Categories
-                              </p>
-                              <ul role='list' aria-labelledby='mobile-categories-heading' className='mt-6 space-y-6'>
-                                {category.categories.map((item) => (
-                                  <li key={item.name} className='flex'>
-                                    <a href={item.href} className='text-gray-500'>
-                                      {item.name}
-                                    </a>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                          <div className='grid grid-cols-1 gap-y-10 gap-x-6'>
-                            <div>
-                              <p id='mobile-collection-heading' className='font-medium text-gray-900'>
-                                Collection
-                              </p>
-                              <ul role='list' aria-labelledby='mobile-collection-heading' className='mt-6 space-y-6'>
-                                {category.collection.map((item) => (
-                                  <li key={item.name} className='flex'>
-                                    <a href={item.href} className='text-gray-500'>
-                                      {item.name}
-                                    </a>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-
-                            <div>
-                              <p id='mobile-brand-heading' className='font-medium text-gray-900'>
-                                Brands
-                              </p>
-                              <ul role='list' aria-labelledby='mobile-brand-heading' className='mt-6 space-y-6'>
-                                {category.brands.map((item) => (
-                                  <li key={item.name} className='flex'>
-                                    <a href={item.href} className='text-gray-500'>
-                                      {item.name}
-                                    </a>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-                      </Tab.Panel>
-                    ))}
-                  </Tab.Panels>
-                </Tab.Group>
-
                 <div className='space-y-6 border-t border-gray-200 py-6 px-4'>
-                  {navigation.pages.map((page) => (
-                    <div key={page.name} className='flow-root'>
-                      <a href={page.href} className='-m-2 block p-2 font-medium text-gray-900'>
-                        {page.name}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-
-                <div className='space-y-6 border-t border-gray-200 py-6 px-4'>
-                  <div className='flow-root'>
+                  {/* <div className='flow-root'>
                     <a href='#' className='-m-2 block p-2 font-medium text-gray-900'>
                       Create an account
                     </a>
-                  </div>
+                  </div> */}
                   <div className='flow-root'>
                     <a href='#' className='-m-2 block p-2 font-medium text-gray-900'>
                       Sign in
@@ -289,13 +232,22 @@ export default function Navbar() {
               </p>
 
               <div className='hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6'>
-                <a href='#' className='text-sm font-medium text-white hover:text-gray-100'>
+                {/* <a href='#' className='text-sm font-medium text-white hover:text-gray-100'>
                   Create an account
-                </a>
-                <span className='h-6 w-px bg-gray-600' aria-hidden='true' />
-                <a href='#' className='text-sm font-medium text-white hover:text-gray-100'>
-                  Sign in
-                </a>
+                </a> */}
+                <span className='h-6 w-px' aria-hidden='true' />
+                {customer && customer?.displayName ? (
+                  <div className='flex items-center space-x-2'>
+                    <p className='text-sm font-normal text-gray-300'>Welcome</p>
+                    <p className='text-sm font-medium text-white'>{customer.firstName}!</p>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => setOpenSignInOverlay(true)}
+                    className='cursor-pointer text-sm font-medium text-white hover:text-gray-100'>
+                    Sign in
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -315,138 +267,6 @@ export default function Navbar() {
                         alt=''
                       />
                     </a>
-                  </div>
-
-                  <div className='hidden h-full lg:flex'>
-                    {/* Mega menus */}
-                    <Popover.Group className='z-20 ml-8'>
-                      <div className='flex h-full justify-center space-x-8'>
-                        {navigation.categories.map((category, categoryIdx) => (
-                          <Popover key={category.name} className='flex'>
-                            {({ open }) => (
-                              <>
-                                <div className='relative flex'>
-                                  <Popover.Button
-                                    className={classNames(
-                                      open
-                                        ? 'border-indigo-600 text-indigo-600'
-                                        : 'border-transparent text-gray-700 hover:text-gray-800',
-                                      'relative z-10 -mb-px flex items-center border-b-2 pt-px text-sm font-medium transition-colors duration-200 ease-out',
-                                    )}>
-                                    {category.name}
-                                  </Popover.Button>
-                                </div>
-
-                                <Transition
-                                  as={Fragment}
-                                  enter='transition ease-out duration-200'
-                                  enterFrom='opacity-0'
-                                  enterTo='opacity-100'
-                                  leave='transition ease-in duration-150'
-                                  leaveFrom='opacity-100'
-                                  leaveTo='opacity-0'>
-                                  <Popover.Panel className='absolute inset-x-0 top-full text-gray-500 sm:text-sm'>
-                                    {/* Presentational element used to render the bottom shadow, if we put the shadow on the actual panel it pokes out the top, so we use this shorter element to hide the top of the shadow */}
-                                    <div className='absolute inset-0 top-1/2 bg-white shadow' aria-hidden='true' />
-
-                                    <div className='relative bg-white'>
-                                      <div className='mx-auto max-w-7xl px-8'>
-                                        <div className='grid grid-cols-2 items-start gap-y-10 gap-x-8 pt-10 pb-12'>
-                                          <div className='grid grid-cols-2 gap-y-10 gap-x-8'>
-                                            <div>
-                                              <p
-                                                id={`desktop-featured-heading-${categoryIdx}`}
-                                                className='font-medium text-gray-900'>
-                                                Featured
-                                              </p>
-                                              <ul
-                                                role='list'
-                                                aria-labelledby={`desktop-featured-heading-${categoryIdx}`}
-                                                className='mt-6 space-y-6 sm:mt-4 sm:space-y-4'>
-                                                {category.featured.map((item) => (
-                                                  <li key={item.name} className='flex'>
-                                                    <a href={item.href} className='hover:text-gray-800'>
-                                                      {item.name}
-                                                    </a>
-                                                  </li>
-                                                ))}
-                                              </ul>
-                                            </div>
-                                            <div>
-                                              <p id='desktop-categories-heading' className='font-medium text-gray-900'>
-                                                Categories
-                                              </p>
-                                              <ul
-                                                role='list'
-                                                aria-labelledby='desktop-categories-heading'
-                                                className='mt-6 space-y-6 sm:mt-4 sm:space-y-4'>
-                                                {category.categories.map((item) => (
-                                                  <li key={item.name} className='flex'>
-                                                    <a href={item.href} className='hover:text-gray-800'>
-                                                      {item.name}
-                                                    </a>
-                                                  </li>
-                                                ))}
-                                              </ul>
-                                            </div>
-                                          </div>
-                                          <div className='grid grid-cols-2 gap-y-10 gap-x-8'>
-                                            <div>
-                                              <p id='desktop-collection-heading' className='font-medium text-gray-900'>
-                                                Collection
-                                              </p>
-                                              <ul
-                                                role='list'
-                                                aria-labelledby='desktop-collection-heading'
-                                                className='mt-6 space-y-6 sm:mt-4 sm:space-y-4'>
-                                                {category.collection.map((item) => (
-                                                  <li key={item.name} className='flex'>
-                                                    <a href={item.href} className='hover:text-gray-800'>
-                                                      {item.name}
-                                                    </a>
-                                                  </li>
-                                                ))}
-                                              </ul>
-                                            </div>
-
-                                            <div>
-                                              <p id='desktop-brand-heading' className='font-medium text-gray-900'>
-                                                Brands
-                                              </p>
-                                              <ul
-                                                role='list'
-                                                aria-labelledby='desktop-brand-heading'
-                                                className='mt-6 space-y-6 sm:mt-4 sm:space-y-4'>
-                                                {category.brands.map((item) => (
-                                                  <li key={item.name} className='flex'>
-                                                    <a href={item.href} className='hover:text-gray-800'>
-                                                      {item.name}
-                                                    </a>
-                                                  </li>
-                                                ))}
-                                              </ul>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </Popover.Panel>
-                                </Transition>
-                              </>
-                            )}
-                          </Popover>
-                        ))}
-
-                        {navigation.pages.map((page) => (
-                          <a
-                            key={page.name}
-                            href={page.href}
-                            className='flex items-center text-sm font-medium text-gray-700 hover:text-gray-800'>
-                            {page.name}
-                          </a>
-                        ))}
-                      </div>
-                    </Popover.Group>
                   </div>
 
                   {/* Mobile menu and search (lg-) */}

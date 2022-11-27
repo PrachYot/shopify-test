@@ -3,7 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function Overlay(props: any) {
-  const { isOpen, onClose } = props;
+  const { isOpen, onClose, title, buttons, children } = props;
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -26,7 +26,7 @@ export default function Overlay(props: any) {
                     <div className='flex min-h-0 flex-1 flex-col overflow-y-scroll py-6'>
                       <div className='px-4 sm:px-6'>
                         <div className='flex items-start justify-between'>
-                          <Dialog.Title className='text-lg font-medium text-gray-900'>Panel title</Dialog.Title>
+                          <Dialog.Title className='text-lg font-medium text-gray-900'>{title}</Dialog.Title>
                           <div className='ml-3 flex h-7 items-center'>
                             <button
                               type='button'
@@ -40,7 +40,7 @@ export default function Overlay(props: any) {
                       </div>
                       <div className='relative mt-6 flex-1 px-4 sm:px-6'>
                         {/* Replace with your content */}
-                        <div className='h-full border-2 border-dashed border-gray-200' aria-hidden='true' />
+                        {children}
                         {/* /End replace */}
                       </div>
                     </div>
@@ -48,13 +48,14 @@ export default function Overlay(props: any) {
                       <button
                         type='button'
                         className='rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'
-                        onClick={() => onClose(false)}>
-                        Cancel
+                        onClick={buttons.cancelButton.onClick}>
+                        {buttons.cancelButton.label}
                       </button>
                       <button
                         type='submit'
-                        className='ml-4 inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'>
-                        Save
+                        className='ml-4 inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'
+                        onClick={buttons.submitButton.onClick}>
+                        {buttons.submitButton.label}
                       </button>
                     </div>
                   </div>

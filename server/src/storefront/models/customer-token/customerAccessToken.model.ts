@@ -2,9 +2,9 @@ import { Field, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
 export class CustomerAccessToken {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
   accessToken: string;
 
-  @Field(() => Date)
+  @Field(() => Date, { nullable: true })
   expiresAt: Date;
 }
