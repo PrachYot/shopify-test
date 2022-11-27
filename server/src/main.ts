@@ -15,7 +15,7 @@ async function bootstrap() {
   Shopify.Context.initialize({
     API_KEY: shopify.apiKey,
     API_SECRET_KEY: shopify.apiSecretKey,
-    SCOPES: [...shopify.scopes.split(',')],
+    SCOPES: [...shopify.scopes.split(',').map((value) => value.trim())],
     HOST_NAME: shopify.host,
     HOST_SCHEME: shopify.hostSchema,
     IS_EMBEDDED_APP: false,

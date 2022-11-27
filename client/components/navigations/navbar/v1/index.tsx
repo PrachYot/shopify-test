@@ -3,6 +3,7 @@ import { Dialog, Popover, Tab, Transition } from '@headlessui/react';
 import { Bars3Icon, MagnifyingGlassIcon, ShoppingCartIcon, UserIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { classNames } from '../../../../utils/classnames/v1';
+import Overlay from '../../../overlays/overlay/v1';
 
 const currencies = ['CAD', 'USD', 'AUD', 'EUR', 'GBP'];
 const navigation = {
@@ -72,9 +73,12 @@ const navigation = {
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [openCartOverlay, setOpenCartOverlay] = useState(false);
 
   return (
     <div className='bg-white'>
+      <Overlay isOpen={openCartOverlay} onClose={() => setOpenCartOverlay(false)} />
+
       {/* Mobile menu */}
       <Transition.Root show={open} as={Fragment}>
         <Dialog as='div' className='relative z-40 lg:hidden' onClose={setOpen}>
@@ -315,7 +319,7 @@ export default function Navbar() {
 
                   <div className='hidden h-full lg:flex'>
                     {/* Mega menus */}
-                    <Popover.Group className='ml-8 z-20'>
+                    <Popover.Group className='z-20 ml-8'>
                       <div className='flex h-full justify-center space-x-8'>
                         {navigation.categories.map((category, categoryIdx) => (
                           <Popover key={category.name} className='flex'>
@@ -493,14 +497,14 @@ export default function Navbar() {
                       <span className='mx-4 h-6 w-px bg-gray-200 lg:mx-6' aria-hidden='true' />
 
                       <div className='flow-root'>
-                        <a href='#' className='group -m-2 flex items-center p-2'>
+                        <div onClick={() => setOpenCartOverlay(true)} className='group -m-2 flex items-center p-2'>
                           <ShoppingCartIcon
                             className='h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-gray-500'
                             aria-hidden='true'
                           />
                           <span className='ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800'>0</span>
                           <span className='sr-only'>items in cart, view bag</span>
-                        </a>
+                        </div>
                       </div>
                     </div>
                   </div>

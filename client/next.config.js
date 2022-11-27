@@ -5,11 +5,12 @@ const nextConfig = {
   reactStrictMode: false,
   images: {
     domains: [
-      "avatars.dicebear.com",
-      "images.unsplash.com",
-      "via.placeholder.com",
-      "lh3.googleusercontent.com",
-      ...(process.env.NEXT_PUBLIC_S3_BUCKET?.split(",") || []),
+      'avatars.dicebear.com',
+      'images.unsplash.com',
+      'via.placeholder.com',
+      'lh3.googleusercontent.com',
+      'cdn.shopify.com',
+      ...(process.env.NEXT_PUBLIC_S3_BUCKET?.split(',') || []),
     ],
   },
 };

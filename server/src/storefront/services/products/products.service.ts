@@ -1,21 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import Shopify from '@shopify/shopify-api';
-import { ConfigsService } from 'src/configs/service/configs.service';
 import { Products } from 'src/storefront/models/products/products.model';
+import { StorefrontService } from '../storefront/storefront.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(private configsService: ConfigsService) {}
+  constructor(private storefrontService: StorefrontService) {}
 
   async products(): Promise<Products> {
-    const { shopify } = this.configsService;
+    const client = this.storefrontService.client();
 
-    const storefrontAccessToken = shopify.storefrontAccessToken;
-
-    const client = new Shopify.Clients.Storefront(shopify.shop, storefrontAccessToken);
-
-    const foundProducts = await client.query<any>({
-      data: `{
+    const foundProducts = await client
+      .query<any>({
+        data: `{
         products(first: 100) {
           edges {
             cursor
@@ -27,6 +23,18 @@ export class ProductsService {
               title
               totalInventory
               updatedAt
+              images(first: 100) {
+                edges {
+                  node {
+                    url
+                  }
+                }
+              }
+              priceRange {
+                minVariantPrice {
+                  amount
+                }
+              }
             }
           }
           pageInfo {
@@ -37,7 +45,10 @@ export class ProductsService {
           }
         }
       }`,
-    });
+      })
+      .catch((error) => {
+        throw new Error(error);
+      });
 
     if (!foundProducts || !foundProducts.body || !foundProducts.body.data) {
       throw new Error('No products found');

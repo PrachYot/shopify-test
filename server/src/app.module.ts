@@ -10,6 +10,13 @@ import { join } from 'path';
 import { CONSTANTS } from './constants';
 import { ProductsResolver } from './storefront/resolvers/products/products.resolver';
 import { ProductsService } from './storefront/services/products/products.service';
+import { CartResolver } from './storefront/resolvers/cart/cart.resolver';
+import { CartService } from './storefront/services/cart/cart.service';
+import { StorefrontService } from './storefront/services/storefront/storefront.service';
+import { CustomerResolver } from './storefront/resolvers/customer/customer.resolver';
+import { CustomerService } from './storefront/services/customer/customer.service';
+import { CustomerTokenResolver } from './storefront/resolvers/customer-token/customer-token.resolver';
+import { CustomerTokenService } from './storefront/services/customer-token/customer-token.service';
 
 @Module({
   imports: [
@@ -40,6 +47,17 @@ import { ProductsService } from './storefront/services/products/products.service
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, ProductsResolver, ProductsService],
+  providers: [
+    AppService,
+    ProductsResolver,
+    ProductsService,
+    CartResolver,
+    CartService,
+    StorefrontService,
+    CustomerResolver,
+    CustomerService,
+    CustomerTokenResolver,
+    CustomerTokenService,
+  ],
 })
 export class AppModule {}
