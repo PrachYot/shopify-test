@@ -35,6 +35,26 @@ export class ProductsService {
                   amount
                 }
               }
+              variants(first: 10) {
+                edges {
+                  node {
+                    id
+                    title
+                    priceV2 {
+                      amount
+                    }
+                    image {
+                      url
+                    }
+                  }
+                }
+                pageInfo {
+                  endCursor
+                  hasNextPage
+                  hasPreviousPage
+                  startCursor
+                }
+              }
             }
           }
           pageInfo {

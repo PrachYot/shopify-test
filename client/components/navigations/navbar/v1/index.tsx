@@ -4,8 +4,8 @@ import { Bars3Icon, MagnifyingGlassIcon, ShoppingCartIcon, UserIcon, XMarkIcon }
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import Overlay from '../../../overlays/overlay/v1';
 import SignInTemplate from '../../../templates/signIn/v1';
-import { gql, useLazyQuery, useMutation, useQuery } from '@apollo/client';
-import { tokenGet } from '../../../../utils/localStorage/v1';
+import { gql, useLazyQuery, useMutation } from '@apollo/client';
+import { tokenGet, tokenSet } from '../../../../utils/localStorage/v1';
 
 const currencies = ['CAD', 'USD', 'AUD', 'EUR', 'GBP'];
 
@@ -34,24 +34,90 @@ const CUSTOMER = gql`
   }
 `;
 
+const CART_CREATE = gql`
+  mutation Mutation {
+    cartCreate {
+      id
+    }
+  }
+`;
+
+const CART = gql`
+  query Cart($cartId: String!) {
+    cart(cartId: $cartId) {
+      id
+      checkoutUrl
+      totalQuantity
+      cost {
+        checkoutChargeAmount {
+          amount
+        }
+        subtotalAmount {
+          amount
+        }
+        totalAmount {
+          amount
+        }
+      }
+    }
+  }
+`;
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [openCartOverlay, setOpenCartOverlay] = useState(false);
   const [openSignInOverlay, setOpenSignInOverlay] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // Customer
   const [customerAccessTokenCreate] = useMutation(CUSTOMER_ACCESS_TOKEN_CREATE);
   const [getCustomer, { data: customerData }] = useLazyQuery(CUSTOMER);
   const [customer, setCustomer] = useState<any>(null);
 
+  // Cart
+  const [cartCreate] = useMutation(CART_CREATE);
+  const [getCart, { data: cartData }] = useLazyQuery(CART);
+  const [_cart, setCart] = useState<any>(null);
+
   useEffect(() => {
     handleGetCustomer();
+    handleGetCart();
   }, []);
 
   useEffect(() => {
     if (!customerData) return;
     setCustomer(customerData.customer);
   }, [customerData]);
+
+  useEffect(() => {
+    if (!cartData) return;
+    setCart(cartData.cart);
+  }, [cartData]);
+
+  const handleGetCart = async () => {
+    let cartId = tokenGet('cartId');
+
+    if (!cartId) {
+      const res = await cartCreate().catch(() => null);
+
+      if (!res || !res.data || !res.data.cartCreate) {
+        return;
+      }
+
+      const { id } = res.data.cartCreate;
+
+      tokenSet('cartId', id);
+
+      cartId = id;
+    }
+
+    await getCart({
+      variables: {
+        cartId,
+      },
+    });
+  };
 
   const handleGetCustomer = async () => {
     const token = tokenGet('accessToken');
@@ -81,7 +147,7 @@ export default function Navbar() {
 
     const { accessToken } = customerAccessToken;
 
-    localStorage.setItem('accessToken', accessToken);
+    tokenSet('accessToken', accessToken);
 
     window.location.reload();
   };

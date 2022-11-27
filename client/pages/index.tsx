@@ -1,4 +1,5 @@
 import { gql, useQuery } from '@apollo/client';
+import _ from 'lodash';
 import { ReactElement } from 'react';
 import Button from '../components/buttons/button/v1';
 import Badge from '../components/elements/badge/v1';
@@ -27,6 +28,26 @@ const PRODUCTS = gql`
               amount
             }
           }
+          variants {
+            edges {
+              node {
+                id
+                title
+                priceV2 {
+                  amount
+                }
+                image {
+                  url
+                }
+              }
+            }
+            pageInfo {
+              endCursor
+              hasNextPage
+              hasPreviousPage
+              startCursor
+            }
+          }
         }
       }
     }
@@ -36,18 +57,23 @@ const PRODUCTS = gql`
 function Home(): ReactElement {
   const { data } = useQuery(PRODUCTS);
 
-  const handleAddToCart = (title: string) => {
-    alert(`Added to cart: ${title}`);
+  const handleAddToCart = (id: string) => {
+    alert(`Added to cart: ${id}`);
   };
 
   return (
     <div>
-      <ThumbnailContainer title='Our Lovely Cofee Just For You'>
-        {data?.products &&
-          data?.products.edges?.map(({ node: product }: { node: any }) => (
-            <div key={product.id} className='space-y-4'>
-              <Thumbnail product={product} />
-              <Button label='Add to cart' onClick={() => handleAddToCart(product.title)} />
+      {_.reverse(data?.products?.edges)?.map(({ node: product }: { node: any }) => (
+        <ThumbnailContainer key={product.id} title={product.title}>
+          {product.variants.edges.map(({ node: variant }: { node: any }) => (
+            <div key={variant.id} className='space-y-2'>
+              <Thumbnail
+                imageUrl={variant.image.url}
+                title={variant.title}
+                amount={variant.priceV2.amount}
+                description={product.title + ', ' + product.description}
+              />
+              <Button label='Add to cart' onClick={() => handleAddToCart(variant.id)} />
               <div>
                 {product.tags.map((tag: string) => (
                   <Badge key={`${product.id}-${tag}`} label={tag} />
@@ -55,7 +81,8 @@ function Home(): ReactElement {
               </div>
             </div>
           ))}
-      </ThumbnailContainer>
+        </ThumbnailContainer>
+      ))}
     </div>
   );
 }

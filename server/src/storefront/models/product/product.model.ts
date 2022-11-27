@@ -1,5 +1,6 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { ProductImages } from '../productImages/productImages.model';
+import { Variants } from '../variants/variants.model';
 import { PriceRange } from './priceRange.model';
 
 @ObjectType()
@@ -30,4 +31,7 @@ export class Product {
 
   @Field(() => PriceRange)
   priceRange: PriceRange;
+
+  @Field(() => Variants)
+  variants: Variants;
 }
