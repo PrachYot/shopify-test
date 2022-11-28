@@ -17,6 +17,8 @@ import { CustomerResolver } from './storefront/resolvers/customer/customer.resol
 import { CustomerService } from './storefront/services/customer/customer.service';
 import { CustomerTokenResolver } from './storefront/resolvers/customer-token/customer-token.resolver';
 import { CustomerTokenService } from './storefront/services/customer-token/customer-token.service';
+import { CheckoutResolver } from './storefront/resolvers/checkout/checkout.resolver';
+import { CheckoutService } from './storefront/services/checkout/checkout.service';
 
 @Module({
   imports: [
@@ -60,6 +62,8 @@ import { CustomerTokenService } from './storefront/services/customer-token/custo
     CustomerService,
     CustomerTokenResolver,
     CustomerTokenService,
+    CheckoutResolver,
+    CheckoutService,
   ],
 })
 export class AppModule {}

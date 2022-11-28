@@ -1,6 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { CartLineInput } from 'src/storefront/inputs/card-line/cartLine.input';
-import { CartLineUpdateInput } from 'src/storefront/inputs/card-line/cartLineUpdate.input';
+import { CartLineInput } from 'src/storefront/inputs/cart-line/cartLine.input';
+import { CartLineUpdateInput } from 'src/storefront/inputs/cart-line/cartLineUpdate.input';
 import { Cart } from 'src/storefront/models/cart/cart.model';
 import { CartService } from 'src/storefront/services/cart/cart.service';
 
