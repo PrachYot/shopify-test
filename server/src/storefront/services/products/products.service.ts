@@ -55,6 +55,12 @@ export class ProductsService {
                   startCursor
                 }
               }
+              metafields(identifiers: {namespace: "custom", key: "add_on_espresso_shot"}) {
+                id
+                key
+                value
+                namespace
+              }
             }
           }
           pageInfo {

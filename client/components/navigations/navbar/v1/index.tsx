@@ -72,6 +72,12 @@ const CART = gql`
               }
               product {
                 title
+                metafields {
+                  id
+                  key
+                  value
+                  namespace
+                }
               }
             }
             attributes {
@@ -100,6 +106,14 @@ const CART = gql`
   }
 `;
 
+const CART_LINE_UPDATE = gql`
+  mutation Mutation($cartId: String!, $cartLineUpdateData: [CartLineUpdateInput!]!) {
+    cartLinesUpdate(cartId: $cartId, cartLineUpdateData: $cartLineUpdateData) {
+      id
+    }
+  }
+`
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [openCartOverlay, setOpenCartOverlay] = useState(false);
@@ -114,7 +128,8 @@ export default function Navbar() {
 
   // Cart
   const [cartCreate] = useMutation(CART_CREATE);
-  const [getCart, { data: cartData }] = useLazyQuery(CART);
+  const [getCart, { data: cartData, refetch: cartRefetch }] = useLazyQuery(CART);
+  const [updateCart] = useMutation(CART_LINE_UPDATE);
   const [cart, setCart] = useState<any>(null);
 
   useEffect(() => {
@@ -197,9 +212,39 @@ export default function Navbar() {
     //
   };
 
-  const handleUpdateCartLineAttributes = async () => {
-    //
+  const handleUpdateCartLineAttributes = async (value: number, id: string, merchandiseId: string, quantity: number) => {
+    await updateCart({
+      variables: {
+        cartId: cart.id,
+        cartLineUpdateData: [
+          {
+            attributes: [{
+              key: 'add_on_espresso_shot',
+              value: value.toString(),
+            }],
+            quantity,
+            id,
+            merchandiseId
+          }
+        ]
+      }
+    })
+
+    await cartRefetch();
   };
+
+  const handleComputePricing = (amount: number, attribute: any[]) => {
+
+    let total = amount;
+
+    const addOnEspresssoShot = attribute.find((item: any) => item.key === 'add_on_espresso_shot');
+
+    if (addOnEspresssoShot) {
+      total += (Number(addOnEspresssoShot.value) * 15);
+    }
+
+    return total
+  }
 
   return (
     <div className='bg-white'>
@@ -234,27 +279,41 @@ export default function Navbar() {
                         <p className='text-sm text-gray-500'>
                           {lineItem.merchandise.title === 'Default Title' ? '-' : lineItem.merchandise.title}
                         </p>
-                        <p className='text-xs text-gray-700'>Total: {lineItem.cost.totalAmount.amount}฿</p>
+                        <p className='text-xs text-gray-700'>Total: {handleComputePricing(lineItem.cost.totalAmount.amount, lineItem.attributes)}฿</p>
                       </div>
                     </div>
-                    <div className='space-y-2'>
+                    {lineItem.merchandise.product.metafields && lineItem.merchandise.product.metafields.find((field: any) => field.key === 'add_on_espresso_shot' && field.value === "true") && (
+                      <div className='space-y-2'>
                       <p className='text-sm'>Add on</p>
                       <p className='text-xs'>Espresso shot</p>
                       <select
                         id={`quantity-${index}`}
                         name={`quantity-${index}`}
-                        value={0}
-                        onChange={handleUpdateCartLineAttributes}
+                        value={function() {
+                          const addOnEspresssoShot = lineItem.attributes.find((item: any) => item.key === 'add_on_espresso_shot');
+
+                          if (addOnEspresssoShot) {
+                            return addOnEspresssoShot.value
+                          }
+
+                          return 0
+                        }()}
+                        onChange={(e: any) => handleUpdateCartLineAttributes(
+                          e.target.value, 
+                          lineItem.id,
+                          lineItem.merchandise.id, 
+                          lineItem.quantity)}
                         className='max-w-full rounded-md border border-gray-300 py-1.5 text-left text-base font-medium leading-5 text-gray-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm'>
-                        <option value={1}>0</option>
+                        <option value={0}>0</option>
                         <option value={1}>1</option>
                         <option value={2}>2</option>
                         <option value={3}>3</option>
                       </select>
                     </div>
+                    )}
                   </div>
 
-                  <div className='mt-4 sm:mt-0 sm:pr-9'>
+                  {/* <div className='mt-4 sm:mt-0 sm:pr-9'>
                     <div className='absolute top-0 right-0'>
                       <button
                         onClick={() => handleCartLinesRemove()}
@@ -264,7 +323,7 @@ export default function Navbar() {
                         <XMarkIcon className='h-5 w-5' aria-hidden='true' />
                       </button>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </li>

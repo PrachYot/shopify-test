@@ -7,6 +7,9 @@ export class CartLineUpdateInput {
   attributes: AttributeInput[];
 
   @Field(() => String)
+  id: string;
+
+  @Field(() => String)
   merchandiseId: string;
 
   @Field(() => Number, { nullable: true })

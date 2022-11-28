@@ -1,6 +1,7 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { ProductImages } from '../productImages/productImages.model';
 import { Variants } from '../variants/variants.model';
+import { Metafield } from './metafield.model';
 import { PriceRange } from './priceRange.model';
 
 @ObjectType()
@@ -34,4 +35,7 @@ export class Product {
 
   @Field(() => Variants)
   variants: Variants;
+
+  @Field(() => [Metafield], { nullable: true })
+  metafields: Metafield[];
 }

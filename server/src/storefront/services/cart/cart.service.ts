@@ -89,6 +89,12 @@ export class CartService {
                           }
                           product {
                             title
+                            metafields(identifiers: {namespace: "custom", key: "add_on_espresso_shot"}) {
+                              id
+                              key
+                              value
+                              namespace
+                            }
                           }
                         }
                       }
