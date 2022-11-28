@@ -61,6 +61,44 @@ export class CartService {
                     amount
                   }
                 }
+                lines(first: 10) {
+                  edges {
+                    node {
+                      id
+                      quantity
+                      cost {
+                        amountPerQuantity {
+                          amount
+                        }
+                        compareAtAmountPerQuantity {
+                          amount
+                        }
+                        subtotalAmount {
+                          amount
+                        }
+                        totalAmount {
+                          amount
+                        }
+                      }
+                      merchandise {
+                        ... on ProductVariant {
+                          id
+                          title
+                          image {
+                            url
+                          }
+                          product {
+                            title
+                          }
+                        }
+                      }
+                      attributes {
+                        key
+                        value
+                      }
+                    }
+                  }
+                }
               }
             }
           `,

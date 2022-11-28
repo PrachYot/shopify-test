@@ -6,6 +6,7 @@ import Overlay from '../../../overlays/overlay/v1';
 import SignInTemplate from '../../../templates/signIn/v1';
 import { gql, useLazyQuery, useMutation } from '@apollo/client';
 import { tokenGet, tokenSet } from '../../../../utils/localStorage/v1';
+import Image from 'next/image';
 
 const currencies = ['CAD', 'USD', 'AUD', 'EUR', 'GBP'];
 
@@ -59,6 +60,42 @@ const CART = gql`
           amount
         }
       }
+      lines {
+        edges {
+          node {
+            id
+            merchandise {
+              id
+              title
+              image {
+                url
+              }
+              product {
+                title
+              }
+            }
+            attributes {
+              key
+              value
+            }
+            quantity
+            cost {
+              amountPerQuantity {
+                amount
+              }
+              compareAtAmountPerQuantity {
+                amount
+              }
+              subtotalAmount {
+                amount
+              }
+              totalAmount {
+                amount
+              }
+            }
+          }
+        }
+      }
     }
   }
 `;
@@ -78,7 +115,7 @@ export default function Navbar() {
   // Cart
   const [cartCreate] = useMutation(CART_CREATE);
   const [getCart, { data: cartData }] = useLazyQuery(CART);
-  const [_cart, setCart] = useState<any>(null);
+  const [cart, setCart] = useState<any>(null);
 
   useEffect(() => {
     handleGetCustomer();
@@ -156,6 +193,14 @@ export default function Navbar() {
     //
   };
 
+  const handleCartLinesRemove = async () => {
+    //
+  };
+
+  const handleUpdateCartLineAttributes = async () => {
+    //
+  };
+
   return (
     <div className='bg-white'>
       <Overlay
@@ -171,8 +216,62 @@ export default function Navbar() {
             label: 'Back',
             onClick: () => setOpenCartOverlay(false),
           },
-        }}
-      />
+        }}>
+        <ul role='list' className='divide-y divide-gray-200 border-t border-b border-gray-200'>
+          {cart?.lines?.edges?.map(({ node: lineItem }: { node: any }, index: number) => (
+            <li key={lineItem.id} className='flex py-6 sm:py-10'>
+              <div className='relative h-24 w-24 overflow-hidden rounded-md'>
+                <Image src={lineItem.merchandise.image.url} layout='fill' objectFit='cover' className='h-full w-full' />
+              </div>
+              <div className='ml-4 flex flex-1 flex-col justify-between sm:ml-6'>
+                <div className='relative pr-9 sm:grid sm:grid-cols-2 sm:gap-x-6 sm:pr-0'>
+                  <div className='space-y-4'>
+                    <div>
+                      <div className='flex justify-between'>
+                        <h3 className='text-sm'>{lineItem.merchandise.product.title}</h3>
+                      </div>
+                      <div className='space-y-2'>
+                        <p className='text-sm text-gray-500'>
+                          {lineItem.merchandise.title === 'Default Title' ? '-' : lineItem.merchandise.title}
+                        </p>
+                        <p className='text-xs text-gray-700'>Total: {lineItem.cost.totalAmount.amount}฿</p>
+                      </div>
+                    </div>
+                    <div className='space-y-2'>
+                      <p className='text-sm'>Add on</p>
+                      <p className='text-xs'>Espresso shot</p>
+                      <select
+                        id={`quantity-${index}`}
+                        name={`quantity-${index}`}
+                        value={0}
+                        onChange={handleUpdateCartLineAttributes}
+                        className='max-w-full rounded-md border border-gray-300 py-1.5 text-left text-base font-medium leading-5 text-gray-700 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm'>
+                        <option value={1}>0</option>
+                        <option value={1}>1</option>
+                        <option value={2}>2</option>
+                        <option value={3}>3</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className='mt-4 sm:mt-0 sm:pr-9'>
+                    <div className='absolute top-0 right-0'>
+                      <button
+                        onClick={() => handleCartLinesRemove()}
+                        type='button'
+                        className='-m-2 inline-flex p-2 text-gray-400 hover:text-gray-500'>
+                        <span className='sr-only'>Remove</span>
+                        <XMarkIcon className='h-5 w-5' aria-hidden='true' />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </Overlay>
+
       <Overlay
         isOpen={openSignInOverlay}
         onClose={() => setOpenSignInOverlay(false)}
@@ -388,7 +487,9 @@ export default function Navbar() {
                             className='h-6 w-6 flex-shrink-0 text-gray-400 group-hover:text-gray-500'
                             aria-hidden='true'
                           />
-                          <span className='ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800'>0</span>
+                          <span className='ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800'>
+                            {cart?.lines?.edges?.length}
+                          </span>
                           <span className='sr-only'>items in cart, view bag</span>
                         </div>
                       </div>

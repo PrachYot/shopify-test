@@ -6,7 +6,7 @@ export class CartLineCost {
   @Field(() => Money)
   amountPerQuantity: Money;
 
-  @Field(() => Money)
+  @Field(() => Money, { nullable: true })
   compareAtAmountPerQuantity: Money;
 
   @Field(() => Money)

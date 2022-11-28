@@ -1,4 +1,5 @@
 import { Field, ObjectType } from '@nestjs/graphql';
+import { Product } from '../product/product.model';
 import { Price } from './price.model';
 import { VariantImage } from './variantImage.model';
 
@@ -15,4 +16,7 @@ export class Variant {
 
   @Field(() => VariantImage)
   image: VariantImage;
+
+  @Field(() => Product)
+  product: Product;
 }
