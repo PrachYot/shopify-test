@@ -7,6 +7,7 @@ import SignInTemplate from '../../../templates/signIn/v1';
 import { gql, useLazyQuery, useMutation } from '@apollo/client';
 import { tokenGet, tokenSet } from '../../../../utils/localStorage/v1';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 
 const currencies = ['CAD', 'USD', 'AUD', 'EUR', 'GBP'];
 
@@ -114,7 +115,24 @@ const CART_LINE_UPDATE = gql`
   }
 `
 
+const CHECKOUT_CREATE = gql`
+  mutation Mutation($checkoutCreateData: CheckoutCreateInput!) {
+    checkoutCreate(checkoutCreateData: $checkoutCreateData) {
+      id
+    }
+  }
+`
+
+const CHECKOUT_CUSTOMER_ASSOCIATE = gql`
+mutation CheckoutCustomerAssociateV2($checkoutId: String!, $customerAccessToken: String!) {
+  checkoutCustomerAssociateV2(checkoutId: $checkoutId, customerAccessToken: $customerAccessToken) {
+    id
+  }
+}
+`
+
 export default function Navbar() {
+  const router = useRouter()
   const [open, setOpen] = useState(false);
   const [openCartOverlay, setOpenCartOverlay] = useState(false);
   const [openSignInOverlay, setOpenSignInOverlay] = useState(false);
@@ -131,6 +149,10 @@ export default function Navbar() {
   const [getCart, { data: cartData, refetch: cartRefetch }] = useLazyQuery(CART);
   const [updateCart] = useMutation(CART_LINE_UPDATE);
   const [cart, setCart] = useState<any>(null);
+
+  // Checkout
+  const [checkoutCreate] = useMutation(CHECKOUT_CREATE);
+  const [checkoutCustomerAssociate] = useMutation(CHECKOUT_CUSTOMER_ASSOCIATE);
 
   useEffect(() => {
     handleGetCustomer();
@@ -205,7 +227,37 @@ export default function Navbar() {
   };
 
   const handleCheckout = async () => {
-    //
+    const lineItems = cart.lines.edges.map(({ node: item }: { node: any }) => {
+      return {
+        customAttributes: [...item.attributes.map((attr: any) => ({ key: attr.key, value: attr.value }))],
+        quantity: item.quantity,
+        variantId: item.merchandise.id,
+      }
+    })
+
+    const checkoutCreateData = {
+      email: customer.email,
+      lineItems
+    }
+
+    const createdCheckout = await checkoutCreate({
+      variables: {
+        checkoutCreateData
+      }
+    })
+
+    const checkoutId = createdCheckout.data.checkoutCreate.id
+
+    await checkoutCustomerAssociate({
+      variables: {
+        checkoutId,
+        customerAccessToken: tokenGet('accessToken')
+      }
+    })
+
+    tokenSet('checkoutId', checkoutId)
+
+    router.push(`/checkout`)
   };
 
   const handleCartLinesRemove = async () => {
