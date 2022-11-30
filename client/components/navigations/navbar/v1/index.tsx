@@ -7,7 +7,6 @@ import SignInTemplate from '../../../templates/signIn/v1';
 import { gql, useLazyQuery, useMutation } from '@apollo/client';
 import { tokenGet, tokenSet } from '../../../../utils/localStorage/v1';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
 
 const currencies = ['CAD', 'USD', 'AUD', 'EUR', 'GBP'];
 
@@ -119,6 +118,7 @@ const CHECKOUT_CREATE = gql`
   mutation Mutation($checkoutCreateData: CheckoutCreateInput!) {
     checkoutCreate(checkoutCreateData: $checkoutCreateData) {
       id
+      webUrl
     }
   }
 `
@@ -132,7 +132,6 @@ mutation CheckoutCustomerAssociateV2($checkoutId: String!, $customerAccessToken:
 `
 
 export default function Navbar() {
-  const router = useRouter()
   const [open, setOpen] = useState(false);
   const [openCartOverlay, setOpenCartOverlay] = useState(false);
   const [openSignInOverlay, setOpenSignInOverlay] = useState(false);
@@ -247,6 +246,7 @@ export default function Navbar() {
     })
 
     const checkoutId = createdCheckout.data.checkoutCreate.id
+    const webUrl = createdCheckout.data.checkoutCreate.webUrl
 
     await checkoutCustomerAssociate({
       variables: {
@@ -255,14 +255,12 @@ export default function Navbar() {
       }
     })
 
-    tokenSet('checkoutId', checkoutId)
-
-    router.push(`/checkout`)
+    window.location.href = webUrl
   };
 
-  const handleCartLinesRemove = async () => {
-    //
-  };
+  // const handleCartLinesRemove = async () => {
+  //   //
+  // };
 
   const handleUpdateCartLineAttributes = async (value: number, id: string, merchandiseId: string, quantity: number) => {
     await updateCart({
