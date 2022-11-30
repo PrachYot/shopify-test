@@ -4,219 +4,81 @@ import { Bars3Icon, MagnifyingGlassIcon, ShoppingCartIcon, UserIcon, XMarkIcon }
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import Overlay from '../../../overlays/overlay/v1';
 import SignInTemplate from '../../../templates/signIn/v1';
-import { gql, useLazyQuery, useMutation } from '@apollo/client';
 import { tokenGet, tokenSet } from '../../../../utils/localStorage/v1';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import axios from 'axios';
 
 const currencies = ['CAD', 'USD', 'AUD', 'EUR', 'GBP'];
 
-const CUSTOMER_ACCESS_TOKEN_CREATE = gql`
-  mutation Mutation($customerAccessTokenCreateData: CustomerAccessTokenCreateInput!) {
-    customerAccessTokenCreate(customerAccessTokenCreateData: $customerAccessTokenCreateData) {
-      customerAccessToken {
-        accessToken
-        expiresAt
-      }
-    }
-  }
-`;
-
-const CUSTOMER = gql`
-  query Customer($customerAccessToken: String!) {
-    customer(customerAccessToken: $customerAccessToken) {
-      id
-      email
-      firstName
-      lastName
-      displayName
-      phone
-      acceptsMarketing
-    }
-  }
-`;
-
-const CART_CREATE = gql`
-  mutation Mutation {
-    cartCreate {
-      id
-    }
-  }
-`;
-
-const CART = gql`
-  query Cart($cartId: String!) {
-    cart(cartId: $cartId) {
-      id
-      checkoutUrl
-      totalQuantity
-      cost {
-        checkoutChargeAmount {
-          amount
-        }
-        subtotalAmount {
-          amount
-        }
-        totalAmount {
-          amount
-        }
-      }
-      lines {
-        edges {
-          node {
-            id
-            merchandise {
-              id
-              title
-              image {
-                url
-              }
-              product {
-                title
-                metafields {
-                  id
-                  key
-                  value
-                  namespace
-                }
-              }
-            }
-            attributes {
-              key
-              value
-            }
-            quantity
-            cost {
-              amountPerQuantity {
-                amount
-              }
-              compareAtAmountPerQuantity {
-                amount
-              }
-              subtotalAmount {
-                amount
-              }
-              totalAmount {
-                amount
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-const CART_LINE_UPDATE = gql`
-  mutation Mutation($cartId: String!, $cartLineUpdateData: [CartLineUpdateInput!]!) {
-    cartLinesUpdate(cartId: $cartId, cartLineUpdateData: $cartLineUpdateData) {
-      id
-    }
-  }
-`
-
-const CHECKOUT_CREATE = gql`
-  mutation Mutation($checkoutCreateData: CheckoutCreateInput!) {
-    checkoutCreate(checkoutCreateData: $checkoutCreateData) {
-      id
-      webUrl
-    }
-  }
-`
-
-const CHECKOUT_CUSTOMER_ASSOCIATE = gql`
-mutation CheckoutCustomerAssociateV2($checkoutId: String!, $customerAccessToken: String!) {
-  checkoutCustomerAssociateV2(checkoutId: $checkoutId, customerAccessToken: $customerAccessToken) {
-    id
-  }
-}
-`
-
 export default function Navbar() {
+  const router = useRouter()
   const [open, setOpen] = useState(false);
   const [openCartOverlay, setOpenCartOverlay] = useState(false);
   const [openSignInOverlay, setOpenSignInOverlay] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // Customer
-  const [customerAccessTokenCreate] = useMutation(CUSTOMER_ACCESS_TOKEN_CREATE);
-  const [getCustomer, { data: customerData }] = useLazyQuery(CUSTOMER);
   const [customer, setCustomer] = useState<any>(null);
-
-  // Cart
-  const [cartCreate] = useMutation(CART_CREATE);
-  const [getCart, { data: cartData, refetch: cartRefetch }] = useLazyQuery(CART);
-  const [updateCart] = useMutation(CART_LINE_UPDATE);
   const [cart, setCart] = useState<any>(null);
-
-  // Checkout
-  const [checkoutCreate] = useMutation(CHECKOUT_CREATE);
-  const [checkoutCustomerAssociate] = useMutation(CHECKOUT_CUSTOMER_ASSOCIATE);
 
   useEffect(() => {
     handleGetCustomer();
     handleGetCart();
   }, []);
 
-  useEffect(() => {
-    if (!customerData) return;
-    setCustomer(customerData.customer);
-  }, [customerData]);
-
-  useEffect(() => {
-    if (!cartData) return;
-    setCart(cartData.cart);
-  }, [cartData]);
-
   const handleGetCart = async () => {
     let cartId = tokenGet('cartId');
 
     if (!cartId) {
-      const res = await cartCreate().catch(() => null);
+      const res = await axios.post('http://localhost:8000/api/v1/storefront/cart/create');
 
-      if (!res || !res.data || !res.data.cartCreate) {
+      if (res.status !== 201) {
         return;
       }
 
-      const { id } = res.data.cartCreate;
+      const { id } = res.data;
 
       tokenSet('cartId', id);
 
       cartId = id;
     }
 
-    await getCart({
-      variables: {
-        cartId,
-      },
+    const res = await axios.post('http://localhost:8000/api/v1/storefront/cart', {
+      cartId
     });
+
+    if (res.status !== 201) {
+      return;
+    }
+
+    setCart(res.data);
   };
 
   const handleGetCustomer = async () => {
     const token = tokenGet('accessToken');
 
-    await getCustomer({
-      variables: {
-        customerAccessToken: token,
-      },
-    });
+    const res = await axios.get(`http://localhost:8000/api/v1/storefront/customer/${token}`)
+
+    if (res.status !== 200) {
+      return
+    }
+
+    setCustomer(res.data)
   };
 
   const handleSignIn = async () => {
-    const res = await customerAccessTokenCreate({
-      variables: {
-        customerAccessTokenCreateData: {
-          email,
-          password,
-        },
-      },
-    }).catch(() => null);
+    const res = await axios.post('http://localhost:8000/api/v1/storefront/customer/login', {
+      email,
+      password
+    }).catch(() => {
+      return null;
+    })
 
-    if (!res || !res.data || !res.data.customerAccessTokenCreate) {
-      return;
+    if (res?.status !== 201) {
+      return
     }
 
-    const { customerAccessToken } = res.data.customerAccessTokenCreate;
+    const { customerAccessToken } = res.data;
 
     const { accessToken } = customerAccessToken;
 
@@ -226,66 +88,37 @@ export default function Navbar() {
   };
 
   const handleCheckout = async () => {
-    const lineItems = cart.lines.edges.map(({ node: item }: { node: any }) => {
-      return {
-        customAttributes: [...item.attributes.map((attr: any) => ({ key: attr.key, value: attr.value }))],
-        quantity: item.quantity,
-        variantId: item.merchandise.id,
-      }
-    })
+    setOpenCartOverlay(false)
+    setOpenSignInOverlay(false)
 
-    const checkoutCreateData = {
-      email: customer.email,
-      lineItems
-    }
-
-    const createdCheckout = await checkoutCreate({
-      variables: {
-        checkoutCreateData
-      }
-    })
-
-    const checkoutId = createdCheckout.data.checkoutCreate.id
-    const webUrl = createdCheckout.data.checkoutCreate.webUrl
-
-    await checkoutCustomerAssociate({
-      variables: {
-        checkoutId,
-        customerAccessToken: tokenGet('accessToken')
-      }
-    })
-
-    window.location.href = webUrl
+    router.push('/checkout')
   };
 
-  // const handleCartLinesRemove = async () => {
-  //   //
-  // };
-
   const handleUpdateCartLineAttributes = async (value: number, id: string, merchandiseId: string, quantity: number) => {
-    await updateCart({
-      variables: {
-        cartId: cart.id,
-        cartLineUpdateData: [
-          {
-            attributes: [{
-              key: 'add_on_espresso_shot',
-              value: value.toString(),
-            }],
-            quantity,
-            id,
-            merchandiseId
-          }
-        ]
-      }
+    const res = await axios.post('http://localhost:8000/api/v1/storefront/cart/lines/update', {
+      cartId: cart.id,
+      cartLineUpdateData: [
+        {
+          attributes: [{
+            key: 'add_on_espresso_shot',
+            value: value.toString(),
+          }],
+          quantity,
+          id,
+          merchandiseId
+        }
+      ]
     })
 
-    await cartRefetch();
+    if (res.status !== 201) {
+      return
+    }
+
+    setCart(res.data)
   };
 
   const handleComputePricing = (amount: number, attribute: any[]) => {
-
-    let total = amount;
+    let total = Number(amount);
 
     const addOnEspresssoShot = attribute.find((item: any) => item.key === 'add_on_espresso_shot');
 
@@ -362,18 +195,6 @@ export default function Navbar() {
                     </div>
                     )}
                   </div>
-
-                  {/* <div className='mt-4 sm:mt-0 sm:pr-9'>
-                    <div className='absolute top-0 right-0'>
-                      <button
-                        onClick={() => handleCartLinesRemove()}
-                        type='button'
-                        className='-m-2 inline-flex p-2 text-gray-400 hover:text-gray-500'>
-                        <span className='sr-only'>Remove</span>
-                        <XMarkIcon className='h-5 w-5' aria-hidden='true' />
-                      </button>
-                    </div>
-                  </div> */}
                 </div>
               </div>
             </li>
@@ -533,7 +354,7 @@ export default function Navbar() {
                 <div className='flex h-16 items-center justify-between'>
                   {/* Logo (lg+) */}
                   <div className='hidden lg:flex lg:items-center'>
-                    <a href='#'>
+                    <a href='/'>
                       <span className='sr-only'>Your Company</span>
                       <img
                         className='h-8 w-auto'

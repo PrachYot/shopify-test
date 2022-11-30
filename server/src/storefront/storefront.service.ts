@@ -243,7 +243,9 @@ export class StorefrontService {
     return products;
   }
 
-  async cart(cartId: string): Promise<any> {
+  async cart(@Body() body): Promise<any> {
+    const { cartId } = body;
+
     const client = this.client();
 
     const foundCart = await client
@@ -361,8 +363,8 @@ export class StorefrontService {
     return cartCreate.cart;
   }
 
-  async cartLinesAdd(cartId: string, @Body() body): Promise<any> {
-    const { cartLineData } = body;
+  async cartLinesAdd(@Body() body): Promise<any> {
+    const { cartId, cartLineData } = body;
 
     const client = this.client();
 
@@ -440,6 +442,103 @@ export class StorefrontService {
     const { cartLinesAdd } = addedCartLines.body.data;
 
     return cartLinesAdd.cart;
+  }
+
+  async cartLinesUpdate(@Body() body): Promise<any> {
+    const { cartId, cartLineUpdateData } = body;
+
+    const client = this.client();
+
+    const updatedCartLines = await client
+      .query<any>({
+        data: {
+          query: `
+            mutation cartLinesUpdate($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
+              cartLinesUpdate(cartId: $cartId, lines: $lines) {
+                cart {
+                  id
+                  checkoutUrl
+                  totalQuantity
+                  cost {
+                    checkoutChargeAmount {
+                      amount
+                    }
+                    subtotalAmount {
+                      amount
+                    }
+                    totalAmount {
+                      amount
+                    }
+                  }
+                  lines(first: 10) {
+                    edges {
+                      node {
+                        id
+                        quantity
+                        cost {
+                          amountPerQuantity {
+                            amount
+                          }
+                          compareAtAmountPerQuantity {
+                            amount
+                          }
+                          subtotalAmount {
+                            amount
+                          }
+                          totalAmount {
+                            amount
+                          }
+                        }
+                        merchandise {
+                          ... on ProductVariant {
+                            id
+                            title
+                            image {
+                              url
+                            }
+                            product {
+                              title
+                              metafields(identifiers: {namespace: "custom", key: "add_on_espresso_shot"}) {
+                                id
+                                key
+                                value
+                                namespace
+                              }
+                            }
+                          }
+                        }
+                        attributes {
+                          key
+                          value
+                        }
+                      }
+                    }
+                  }
+                }
+                userErrors {
+                  field
+                  message
+                }
+              }
+            }
+          `,
+          variables: {
+            cartId,
+            lines: cartLineUpdateData,
+          },
+        },
+      })
+      .catch((error) => {
+        throw new Error(error);
+      });
+
+    if (!updatedCartLines || !updatedCartLines.body || !updatedCartLines.body.data) {
+      throw new Error('No cart lines updated');
+    }
+
+    const { cartLinesUpdate } = updatedCartLines.body.data;
+
+    return cartLinesUpdate.cart;
   }
 
   async checkoutCreate(@Body() body): Promise<any> {

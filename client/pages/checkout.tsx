@@ -3,7 +3,7 @@ import Layout from "../layouts/v1";
 
 function Checkout(): ReactElement {
   return(
-    <div></div>
+    <div>Checkout page</div>
   )
 }
 

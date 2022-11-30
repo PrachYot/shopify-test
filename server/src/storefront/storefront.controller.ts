@@ -19,7 +19,7 @@ export class StorefrontController {
   }
 
   // Customer token
-  @Post('customer/create/access-token')
+  @Post('customer/login')
   async customerAccessTokenCreate(@Req() req): Promise<any> {
     return this.storefrontService.customerAccessTokenCreate(req.body);
   }
@@ -31,11 +31,9 @@ export class StorefrontController {
   }
 
   // Cart
-  @Get('cart/:cartId')
-  async cart(@Param() params): Promise<any> {
-    const { cartId } = params;
-
-    return this.storefrontService.cart(cartId);
+  @Post('cart')
+  async cart(@Req() req): Promise<any> {
+    return this.storefrontService.cart(req.body);
   }
 
   @Post('cart/create')
@@ -43,11 +41,14 @@ export class StorefrontController {
     return this.storefrontService.cartCreate();
   }
 
-  @Post('cart/:cartId/lines/add')
-  async cartLinesAdd(@Param() params, @Req() req): Promise<any> {
-    const { cartId } = params;
+  @Post('cart/lines/add')
+  async cartLinesAdd(@Req() req): Promise<any> {
+    return this.storefrontService.cartLinesAdd(req.body);
+  }
 
-    return this.storefrontService.cartLinesAdd(cartId, req.body);
+  @Post('cart/lines/update')
+  async cartLinesUpdate(@Req() req): Promise<any> {
+    return this.storefrontService.cartLinesUpdate(req.body);
   }
 
   // Checkout
