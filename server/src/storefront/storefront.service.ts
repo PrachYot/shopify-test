@@ -888,4 +888,98 @@ export class StorefrontService {
 
     return checkoutCompleteFree.checkout;
   }
+
+  async checkoutShippingAddressUpdateV2(@Body() body): Promise<any> {
+    const { checkoutId, shippingAddress } = body;
+
+    const client = this.client();
+
+    const updatedCheckout = await client
+      .query<any>({
+        data: {
+          query: `
+            mutation checkoutShippingAddressUpdateV2($checkoutId: ID!, $shippingAddress: MailingAddressInput!) {
+              checkoutShippingAddressUpdateV2(checkoutId: $checkoutId, shippingAddress: $shippingAddress) {
+                checkout {
+                  id
+                  customAttributes {
+                    key
+                    value
+                  }
+                  email
+                  lineItemsSubtotalPrice {
+                    amount
+                  }
+                  note
+                  ready
+                  subtotalPrice {
+                    amount
+                  }
+                  totalPrice {
+                    amount
+                  }
+                  lineItems(first: 10) {
+                    edges {
+                      node {
+                        id
+                        quantity
+                        customAttributes {
+                          key
+                          value
+                        }
+                        title
+                        unitPrice {
+                          amount
+                        }
+                        variant {
+                          id
+                          title
+                          priceV2 {
+                            amount
+                          }
+                          image {
+                            url
+                          }
+                          product {
+                            id
+                            title
+                            metafields(identifiers: {namespace: "custom", key: "add_on_espresso_shot"}) {
+                              id
+                              key
+                              value
+                              namespace
+                            }
+                          }
+                        }
+                      }
+                    }
+                    pageInfo {
+                      hasNextPage
+                      hasPreviousPage
+                      startCursor
+                      endCursor
+                    }
+                  }
+                }
+              }
+            }
+          `,
+          variables: {
+            checkoutId,
+            shippingAddress,
+          },
+        },
+      })
+      .catch((error) => {
+        throw new Error(error);
+      });
+
+    if (!updatedCheckout || !updatedCheckout.body || !updatedCheckout.body.data) {
+      throw new Error('Unable to update checkout');
+    }
+
+    const { checkoutShippingAddressUpdateV2 } = updatedCheckout.body.data;
+
+    return checkoutShippingAddressUpdateV2.checkout;
+  }
 }

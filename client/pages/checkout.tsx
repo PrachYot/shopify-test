@@ -99,14 +99,6 @@ function Checkout(): ReactElement {
     })
   }
 
-  const checkoutCompleteFree = async (checkoutId: string) => {
-    const res = await axios.post('http://localhost:8000/api/v1/storefront/checkout/complete/free', {
-      checkoutId
-    })
-
-    console.log(res)
-  }
-
   const handleCheckout = async (e: any) => {
     e.preventDefault()
 
@@ -121,7 +113,7 @@ function Checkout(): ReactElement {
 
     await checkoutCustomerAssociate(checkoutId, accessToken);
 
-    await checkoutCompleteFree(checkoutId)
+    // Buy with card & promptpay
   }
 
   return (

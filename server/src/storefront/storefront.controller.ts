@@ -66,4 +66,9 @@ export class StorefrontController {
   async checkoutCompleteFree(@Req() req): Promise<any> {
     return this.storefrontService.checkoutCompleteFree(req.body);
   }
+
+  @Post('checkout/shipping-address/update')
+  async checkoutShippingAddressUpdateV2(@Req() req): Promise<any> {
+    return this.storefrontService.checkoutShippingAddressUpdateV2(req.body);
+  }
 }
