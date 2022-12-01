@@ -117,18 +117,6 @@ export default function Navbar() {
     setCart(res.data)
   };
 
-  const handleComputePricing = (amount: number, attribute: any[]) => {
-    let total = Number(amount);
-
-    const addOnEspresssoShot = attribute.find((item: any) => item.key === 'add_on_espresso_shot');
-
-    if (addOnEspresssoShot) {
-      total += (Number(addOnEspresssoShot.value) * 15);
-    }
-
-    return total
-  }
-
   return (
     <div className='bg-white'>
       <Overlay
@@ -162,7 +150,7 @@ export default function Navbar() {
                         <p className='text-sm text-gray-500'>
                           {lineItem.merchandise.title === 'Default Title' ? '-' : lineItem.merchandise.title}
                         </p>
-                        <p className='text-xs text-gray-700'>Total: {handleComputePricing(lineItem.cost.totalAmount.amount, lineItem.attributes)}฿</p>
+                        <p className='text-xs text-gray-700'>Total: {lineItem.cost.totalAmount.amount}฿</p>
                       </div>
                     </div>
                     {lineItem.merchandise.product.metafields && lineItem.merchandise.product.metafields.find((field: any) => field.key === 'add_on_espresso_shot' && field.value === "true") && (

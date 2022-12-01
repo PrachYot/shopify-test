@@ -57,17 +57,13 @@ export class StorefrontController {
     return this.storefrontService.checkoutCreate(req.body);
   }
 
-  @Post('checkout/:checkoutId/customer/associate')
-  async checkoutCustomerAssociateV2(@Param() params, @Req() req): Promise<any> {
-    const { checkoutId } = params;
-
-    return this.storefrontService.checkoutCustomerAssociateV2(checkoutId, req.body);
+  @Post('checkout/customer/associate')
+  async checkoutCustomerAssociateV2(@Req() req): Promise<any> {
+    return this.storefrontService.checkoutCustomerAssociateV2(req.body);
   }
 
-  @Get('checkout/:checkoutId/complete/free')
-  async checkoutCompleteFree(@Param() params): Promise<any> {
-    const { checkoutId } = params;
-
-    return this.storefrontService.checkoutCompleteFree(checkoutId);
+  @Post('checkout/complete/free')
+  async checkoutCompleteFree(@Req() req): Promise<any> {
+    return this.storefrontService.checkoutCompleteFree(req.body);
   }
 }

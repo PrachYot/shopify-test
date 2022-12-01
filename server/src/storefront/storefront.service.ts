@@ -243,6 +243,65 @@ export class StorefrontService {
     return products;
   }
 
+  private sumAmounts(amounts: any[]): string {
+    const newAmount = amounts.reduce((sum, amount) => sum + Number(amount), 0);
+
+    return newAmount.toString();
+  }
+
+  private cartAddOns(cart): any {
+    let totalAddOns = 0;
+
+    cart.lines.edges = cart.lines.edges.map((item) => {
+      const { node } = item;
+      const { attributes, cost } = node;
+      const { amountPerQuantity, subtotalAmount, totalAmount } = cost;
+
+      let addOns = 0;
+
+      attributes.forEach((attr: { key: string; value: string }) => {
+        if (attr.key === 'add_on_espresso_shot') {
+          // 15฿ per shot
+          addOns += parseInt(attr.value) * 15;
+        }
+      });
+
+      // Update node.cost
+      node.cost = {
+        amountPerQuantity,
+        subtotalAmount: {
+          amount: this.sumAmounts([subtotalAmount.amount, addOns]),
+        },
+        totalAmount: {
+          amount: this.sumAmounts([totalAmount.amount, addOns]),
+        },
+      };
+
+      totalAddOns += addOns;
+
+      return {
+        item,
+        node,
+      };
+    });
+
+    // Update cart.cost
+    cart.cost = {
+      ...cart.cost,
+      checkoutChargeAmount: {
+        amount: this.sumAmounts([cart.cost.checkoutChargeAmount.amount, totalAddOns]),
+      },
+      subtotalAmount: {
+        amount: this.sumAmounts([cart.cost.subtotalAmount.amount, totalAddOns]),
+      },
+      totalAmount: {
+        amount: this.sumAmounts([cart.cost.totalAmount.amount, totalAddOns]),
+      },
+    };
+
+    return cart;
+  }
+
   async cart(@Body() body): Promise<any> {
     const { cartId } = body;
 
@@ -265,6 +324,9 @@ export class StorefrontService {
                     amount
                   }
                   totalAmount {
+                    amount
+                  }
+                  totalTaxAmount {
                     amount
                   }
                 }
@@ -330,7 +392,9 @@ export class StorefrontService {
 
     const { cart } = foundCart.body.data;
 
-    return cart;
+    const result = this.cartAddOns(cart);
+
+    return result;
   }
 
   async cartCreate(): Promise<any> {
@@ -538,7 +602,10 @@ export class StorefrontService {
 
     const { cartLinesUpdate } = updatedCartLines.body.data;
 
-    return cartLinesUpdate.cart;
+    // Support addons
+    const result = this.cartAddOns(cartLinesUpdate.cart);
+
+    return result;
   }
 
   async checkoutCreate(@Body() body): Promise<any> {
@@ -635,8 +702,8 @@ export class StorefrontService {
     return checkoutCreate.checkout;
   }
 
-  async checkoutCustomerAssociateV2(checkoutId: string, @Body() body): Promise<any> {
-    const { customerAccessToken } = body;
+  async checkoutCustomerAssociateV2(@Body() body): Promise<any> {
+    const { checkoutId, customerAccessToken } = body;
 
     const client = this.client();
 
@@ -729,7 +796,9 @@ export class StorefrontService {
     return checkoutCustomerAssociateV2.checkout;
   }
 
-  async checkoutCompleteFree(checkoutId: string): Promise<any> {
+  async checkoutCompleteFree(@Body() body): Promise<any> {
+    const { checkoutId } = body;
+
     const client = this.client();
 
     const completedCheckout = await client
