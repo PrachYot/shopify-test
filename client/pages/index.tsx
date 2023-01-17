@@ -52,7 +52,7 @@ function Home(): ReactElement {
           {product.variants.edges.map(({ node: variant }: { node: any }) => (
             <div key={variant.id} className='space-y-2'>
               <Thumbnail
-                imageUrl={variant.image.url}
+                imageUrl={variant.image?.url}
                 title={product.title}
                 amount={variant.priceV2.amount}
                 description={`${variant.title === 'Default Title' ? '' : variant.title} ${product.description}`}
